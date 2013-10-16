@@ -1,0 +1,152 @@
+import os
+import logging
+import json
+import datetime
+
+import webapp2
+import jinja2
+
+import configuration
+from urllib import quote, urlencode
+from google.appengine.api import urlfetch
+
+from google.appengine.ext import ndb
+
+jinja_environment = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), "templates")))
+
+from models import Content, Link
+
+from bs4 import BeautifulSoup
+
+class CheckRecentContent(webapp2.RequestHandler):
+    def get(self):
+    	query = {
+    		"page-size" : "50",
+    		"date-id" : "date/today",
+    		"show-fields" : "body",
+    		"show-tags" : "all",
+    	}
+
+    	api_key = configuration.lookup('CONTENT_API_KEY')
+    	logging.info(api_key)
+
+    	if not api_key:
+    		self.response.write("No content API key defined")
+    		return
+
+    	query['api-key'] = api_key
+
+    	response = urlfetch.fetch('http://content.guardianapis.com/search?%s' % urlencode(query))
+
+    	if response.status_code == 200:
+    		payload = json.loads(response.content)
+    		if not "ok" in payload.get("response", {}).get("status", "notfound"):
+    			self.response.write("Content API did not return a result")
+    			return
+
+    		for item in payload["response"].get("results", []):
+    			if not 'fields' in item or not 'body' in item['fields']:
+    				continue
+    			logging.info(item)
+    			lookup_key = ndb.Key('Content', item["id"])
+    			if not lookup_key.get():
+    				commercial_content = "tone/sponsoredfeatures" in map(lambda p: p["id"], item["tags"])
+    				Content(id=item['id'], web_url=item['webUrl'], body= item['fields']['body'], commercial=commercial_content).put()
+        self.response.write('Content checked')
+
+class ExtractLinks(webapp2.RequestHandler):
+	def get(self):
+		template = jinja_environment.get_template('tasks/link-extracting.html')
+
+		unchecked_content = Content.query(Content.links_extracted == False)
+
+		template_values = {
+			"unparseable_content" : [],
+			"links_extracted" : [],
+		}
+
+		def parse_body(item):
+			try:
+				soup = BeautifulSoup(item.body)
+				return soup
+			except:
+				logging.fatal("Could not parse {0}".format(item.web_url))
+
+			return None
+
+		for item in unchecked_content:
+				soup = parse_body(item)
+				if not soup:
+					template_values["unparseable_content"].append(item)
+					item.parse_failed = True
+					item.put()
+					continue
+
+				for link in soup.find_all('a'):
+					href = link.get("href")
+					logging.info(href)
+					template_values['links_extracted'].append(href)
+					if href:
+						link_record = Link(parent=item.key, link_url=href)
+
+						if not "nofollow" in link.attrs.keys() and item.commercial:
+							link_record.invalid = True
+							link_record.error = "Nofollow not applied to sponsored feature link"
+
+						link_record.put()
+
+				item.links_extracted = True
+				item.put()
+
+		self.response.write(template.render(template_values))
+
+class CheckLinks(webapp2.RequestHandler):
+	def get(self):
+		def check_url(url):
+			try:
+				link_check_result = urlfetch.fetch(url)
+				logging.info(link_check_result.status_code)
+				return 200 <= link_check_result.status_code < 400
+			except Exception, e:
+				logging.warn(e)
+
+			return False
+
+		template = jinja_environment.get_template('tasks/link-checking.html')
+		template_values = {}
+
+		links_query = Link.query(Link.checked == False, Link.invalid == False)
+		links_to_check = links_query.fetch(limit=50)
+
+		valid_links = 0
+		invalid_links = 0
+
+		for link in links_to_check:
+			logging.info(link)
+			link_status = check_url(link.link_url)
+
+			logging.info(link_status)
+
+			if link_status:
+				valid_links += 1
+			else:
+				invalid_links += 1
+
+			link.checked = True
+			link.invalid = not link_status
+			link.error = "Link did not resolve correctly"
+			link.put()
+
+
+		template_values['valid_links'] = valid_links
+		template_values['invalid_links'] = invalid_links
+
+		self.response.write(template.render(template_values))
+
+
+app = webapp2.WSGIApplication([
+    ('/tasks/check-recent', CheckRecentContent),
+    ('/tasks/extract-links', ExtractLinks),
+    ('/tasks/check-links', CheckLinks),
+], debug=True)

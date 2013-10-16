@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Link extracting report{% endblock %}
+
+{% block content %}
+<div class="fluid-wrap">
+	<div class="fluid-row">
+		<div class="col-12">
+			<h1 class="article-heading">Link checking</h1>
+		</div>
+	</div>
+
+	<div class="fluid-row margin-top">
+		<div class="col-6">
+			{% if unparseable_content %}
+			<h2>Parsing failures</h2>
+			{% for item in unparseable_content %}
+			<p><a href="{{item.web_url}}">{{item.web_url}}</a></p>
+			{% endfor %}
+			{% endif %}
+		</div>
+		<div class="col-6">
+		<h2>Links extracted</h2>
+		<p>{{links_extracted|length}}</p>
+		</div>
+	</div>
+</div>
+
+{% endblock %}

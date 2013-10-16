@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Errors{% endblock %}
+
+{% block content %}
+<div class="fluid-wrap">
+	<div class="fluid-row">
+		<div class="col-12">
+			<h1 class="article-heading">{{heading_text}}</h1>
+		</div>
+	</div>
+
+	<div class="fluid-row margin-top">
+		<div class="col-12">
+				{% for link in error_links %}
+				<section class="link-error">
+					<p class="link-error-url">{{link.link_url}}</p>
+
+					<p><span class="link-error-message">{{link.error}}</span><br>
+					<span class="link-error-origin"><a href="{{link.origin_url}}">{{link.origin_url}}</a></span><br><small><time>{{link.last_checked}}</time></small></p>
+				</section>
+				{% endfor %}
+
+		</div>
+
+		</div>
+	</div>
+</div>
+
+{% endblock %}

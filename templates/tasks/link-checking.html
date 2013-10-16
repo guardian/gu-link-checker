@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Link checking report{% endblock %}
+
+{% block content %}
+<div class="fluid-wrap">
+	<div class="fluid-row">
+		<div class="col-12">
+			<h1 class="article-heading">Link checking</h1>
+		</div>
+	</div>
+
+	<div class="fluid-row margin-top">
+		<div class="col-12">
+			<p>{{valid_links}} valid links, {{invalid_links}} invalid links</p>
+		</div>
+	</div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,13 @@
+
+cron:
+- description: Read the Content API for new Content
+  url: /tasks/check-recent
+  schedule: every 2 minutes
+
+- description: Extract links from content bodies
+  url: /tasks/extract-links
+  schedule: every 3 minutes
+
+- description: Extract links from content bodies
+  url: /tasks/check-links
+  schedule: every 2 minutes

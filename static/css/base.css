@@ -1,0 +1,17 @@
+
+body {
+			margin-top: 2em;
+	}
+
+.link-error {
+	margin-bottom: 0.7rem;
+}
+
+.link-error:nth-child(odd) {
+	padding: 0.5rem;
+	background-color: #ddd;
+}
+
+.link-error-url {
+	font-weight: bold;
+}

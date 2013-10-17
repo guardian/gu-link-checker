@@ -8,7 +8,7 @@ class Content(ndb.Model):
 	web_url = ndb.StringProperty(required=True)
 	body = ndb.TextProperty(required=True)
 	commercial = ndb.BooleanProperty(required=True, default=False)
-	date_seen = ndb.DateTimeProperty(auto_now_add=True)
+	date_seen = ndb.DateTimeProperty(auto_now=True)
 	checked = ndb.BooleanProperty(default=False)
 	links_extracted = ndb.BooleanProperty(default=False)
 	parse_failed = ndb.BooleanProperty(default=False)

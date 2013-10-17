@@ -16,7 +16,7 @@
 				<section class="link-error">
 					<p class="link-error-url">{{link.link_url}}</p>
 
-					<p><span class="link-error-message">{{link.error}}</span><br>
+					<p><span class="link-error-message">{{link.error}}</span> (<a href="{{link.link_url}}">view-link</a>)<br>
 					<span class="link-error-origin"><a href="{{link.origin_url}}">{{link.origin_url}}</a></span><br><small><time>{{link.last_checked}}</time></small></p>
 				</section>
 				{% endfor %}

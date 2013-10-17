@@ -3,6 +3,8 @@ import logging
 import json
 import datetime
 
+from urlparse import urlparse
+
 import webapp2
 import jinja2
 
@@ -12,12 +14,17 @@ from google.appengine.api import urlfetch
 
 from google.appengine.ext import ndb
 
-jinja_environment = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), "templates")))
 
 from models import Content, Link
 
 from bs4 import BeautifulSoup
+from validate_email import validate_email
+
+jinja_environment = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), "templates")))
+
+def is_commercial(item):
+	return "tone/sponsoredfeatures" in map(lambda p: p["id"], item["tags"])
 
 class CheckRecentContent(webapp2.RequestHandler):
     def get(self):
@@ -26,10 +33,10 @@ class CheckRecentContent(webapp2.RequestHandler):
     		"date-id" : "date/today",
     		"show-fields" : "body",
     		"show-tags" : "all",
+    		"use-date" : "last-modified",
     	}
 
     	api_key = configuration.lookup('CONTENT_API_KEY')
-    	logging.info(api_key)
 
     	if not api_key:
     		self.response.write("No content API key defined")
@@ -37,7 +44,7 @@ class CheckRecentContent(webapp2.RequestHandler):
 
     	query['api-key'] = api_key
 
-    	response = urlfetch.fetch('http://content.guardianapis.com/search?%s' % urlencode(query))
+    	response = urlfetch.fetch('http://content.guardianapis.com/search?%s' % urlencode(query), deadline=7)
 
     	if response.status_code == 200:
     		payload = json.loads(response.content)
@@ -48,11 +55,23 @@ class CheckRecentContent(webapp2.RequestHandler):
     		for item in payload["response"].get("results", []):
     			if not 'fields' in item or not 'body' in item['fields']:
     				continue
-    			logging.info(item)
+				
     			lookup_key = ndb.Key('Content', item["id"])
-    			if not lookup_key.get():
-    				commercial_content = "tone/sponsoredfeatures" in map(lambda p: p["id"], item["tags"])
-    				Content(id=item['id'], web_url=item['webUrl'], body= item['fields']['body'], commercial=commercial_content).put()
+    			content_entry = lookup_key.get()
+
+    			if content_entry:
+    				content_entry.body = item['fields']['body']
+    				content_entry.commercial = is_commercial(item)
+    				content_entry.checked = False
+    				content_entry.parse_failed = False
+    				content_entry.links_extracted = False
+
+    				for current_link in Link.query(ancestor=content_entry.key):
+    					current_link.key.delete()
+
+    				content_entry.put()
+    			else:
+    				Content(id=item['id'], web_url=item['webUrl'], body= item['fields']['body'], commercial=is_commercial(item)).put()
         self.response.write('Content checked')
 
 class ExtractLinks(webapp2.RequestHandler):
@@ -85,14 +104,15 @@ class ExtractLinks(webapp2.RequestHandler):
 
 				for link in soup.find_all('a'):
 					href = link.get("href")
-					logging.info(href)
+
 					template_values['links_extracted'].append(href)
 					if href:
 						link_record = Link(parent=item.key, link_url=href)
 
-						if not "nofollow" in link.attrs.keys() and item.commercial:
-							link_record.invalid = True
-							link_record.error = "Nofollow not applied to sponsored feature link"
+						if item.commercial:
+							if not "rel" in link.attrs.keys() or link.attrs["rel"] != "nofollow":
+								link_record.invalid = True
+								link_record.error = "Nofollow not applied to sponsored feature link"
 
 						link_record.put()
 
@@ -105,13 +125,13 @@ class CheckLinks(webapp2.RequestHandler):
 	def get(self):
 		def check_url(url):
 			try:
-				link_check_result = urlfetch.fetch(url)
-				logging.info(link_check_result.status_code)
-				return 200 <= link_check_result.status_code < 400
+				link_check_result = urlfetch.fetch(url, deadline=7)
+				return (200 <= link_check_result.status_code < 400, "Status code {0}".format(link_check_result.status_code))
 			except Exception, e:
 				logging.warn(e)
+				return (False, "Failed to read the url: {0}".format(e))
 
-			return False
+			return (False, None)
 
 		template = jinja_environment.get_template('tasks/link-checking.html')
 		template_values = {}
@@ -123,19 +143,40 @@ class CheckLinks(webapp2.RequestHandler):
 		invalid_links = 0
 
 		for link in links_to_check:
-			logging.info(link)
-			link_status = check_url(link.link_url)
+			#logging.info(link)
 
-			logging.info(link_status)
+			parsed_url = None
+			try:
+				parsed_url = urlparse(link.link_url)
+			except ValueError, ve:
+				link.invalid = True
+				link.error = "URL had an invalid format"
+				continue
 
-			if link_status:
-				valid_links += 1
-			else:
-				invalid_links += 1
+			if parsed_url.scheme in ["http", "https"]:
+
+				(link_status, error_message) = check_url(link.link_url)
+
+				if link_status:
+					valid_links += 1
+				else:
+					invalid_links += 1
+
+
+				link.checked = True
+				link.invalid = not link_status
+				if not link_status: 
+					link.error = "Link did not resolve correctly: " + error_message
+
+			if parsed_url.scheme == 'mailto':
+				email_valid = validate_email(link.link_url[7:])
+
+				if not email_valid:
+					link.invalid = True
+					link.error = "Email address did not have a valid structure"
+
 
 			link.checked = True
-			link.invalid = not link_status
-			link.error = "Link did not resolve correctly"
 			link.put()
 
 

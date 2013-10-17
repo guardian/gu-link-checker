@@ -6,7 +6,7 @@
 <div class="fluid-wrap">
 	<div class="fluid-row">
 		<div class="col-12">
-			<h1 class="article-heading">{{heading_text}}</h1>
+			<h1 class="beta sans-serif">{{heading_text}}</h1>
 		</div>
 	</div>
 
@@ -14,10 +14,11 @@
 		<div class="col-12">
 				{% for link in error_links %}
 				<section class="link-error">
-					<p class="link-error-url">{{link.link_url}}</p>
+					<p class="link-error-url sans-serif">{{link.link_url}}</p>
 
-					<p><span class="link-error-message">{{link.error}}</span> (<a href="{{link.link_url}}">view-link</a>)<br>
-					<span class="link-error-origin"><a href="{{link.origin_url}}">{{link.origin_url}}</a></span><br><small><time>{{link.last_checked}}</time></small></p>
+					<p class="link-error-detail"><span class="link-error-detail-message">{{link.error}}</span> <sup class="link-error-detail-view-link">(<a href="{{link.link_url}}">view-link</a>)</sup></p>
+					<p class="link-error-origin">Source: <a href="{{link.origin_url}}">{{link.origin_url}}</a></p>
+					<p class="link-error-when">Checked: <time class="link-error-when-timestamp">{{link.last_checked_text}}</time></p>
 				</section>
 				{% endfor %}
 
@@ -27,4 +28,13 @@
 	</div>
 </div>
 
+<script src="/static/js/moment-with-langs.min.js"></script>
+
+<script>
+	$(".link-error-when-timestamp").each( function(i, elem) {
+		$elem = $(elem);
+		console.log($elem.text());
+		$elem.text(moment.utc($elem.text()).fromNow());
+	});
+</script>
 {% endblock %}

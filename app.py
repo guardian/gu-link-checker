@@ -3,6 +3,8 @@ import jinja2
 import os
 import json
 import logging
+import datetime
+
 from urllib import quote, urlencode
 from google.appengine.api import urlfetch
 
@@ -25,13 +27,18 @@ class DisplayInvalidLinksPage(webapp2.RequestHandler):
 		
 		template_values = {"heading_text" : "Link errors"}
 
-		error_query = Link.query(Link.invalid == True).order(-Link.last_checked)
+		last_24_hours = datetime.datetime.now() - datetime.timedelta(days = 1)
+		logging.info(last_24_hours)
+
+		error_query = Link.query(Link.invalid == True, Link.last_checked >= last_24_hours).order(-Link.last_checked)
 
 		def process_link(link):
 			content = link.key.parent().get()
 			if content:
 				link.origin_url = content.web_url
 
+			if link.last_checked:
+				link.last_checked_text = link.last_checked.strftime('%Y-%m-%d %H:%M:%S')
 			return link
 
 

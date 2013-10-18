@@ -1,30 +1,35 @@
 {% extends 'base.html' %}
 
-{% block title %}Simple python app example{% endblock %}
+{% block title %}Guardian link checker{% endblock %}
 
 {% block content %}
 <div class="fluid-wrap">
 	<div class="fluid-row">
 		<div class="col-12">
-			<h1 class="article-heading">Simple Python app for Google Appengine</h1>
+			<h1 class="article-heading">Guardian link checking</h1>
 
-			<blockquote>Making it easy to make simple apps</blockquote>
+			<blockquote>Checking what the Guardian links to</blockquote>
 		</div>
 	</div>
 
 	<div class="fluid-row margin-top">
 		<div class="col-6">
 			<h2 class="sub-heading">What is this?</h2>
-			<p>This is a template app to provide a basic scaffold for a Python app deployed on Google App Engine.</p>
-			<p>It is meant to provide a good basis for relatively uncomplicated micro apps.</p>
+			<p>This application uses the Content API to examine what links are present in the body and then tries to validate them.</p>
+			<h2 class="sub-heading">Current rules</h2>
+			<ul>
+				<li>For a regular link the app will try and read the link</li>
+				<li>Links are assumed to absolute and will fail if they are relative</li>
+				<li>For a mailto link the app will try to check that the content of the link is a valid email</li>
+				<li>For sponsored content the app will check whether the link has had the rel="nofollow" attribute applied to it</li>
+			</ul>
 		</div>
 		<div class="col-6">
-			<h2 class="sub-heading">How do I use it?</h2>
+			<h2 class="sub-heading">Where can I see the results</h2>
 
-			<ol>
-				<li>Add the git repo as a remote to your project repo and pull the template into your new project.</li>
-				<li>That's it.</li>
-			</ol>
+			<ul>
+				<li><a href="/invalid-links">Invalid links</a></li>
+			</ul>
 
 
 		</div>

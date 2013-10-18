@@ -107,12 +107,7 @@ class ExtractLinks(webapp2.RequestHandler):
 
 					template_values['links_extracted'].append(href)
 					if href:
-						link_record = Link(parent=item.key, link_url=href)
-
-						if item.commercial:
-							if not "rel" in link.attrs.keys() or link.attrs["rel"] != "nofollow":
-								link_record.invalid = True
-								link_record.error = "Nofollow not applied to sponsored feature link"
+						link_record = Link(parent=item.key, link_url=href, raw_text=str(link), commercial=item.commercial)
 
 						link_record.put()
 
@@ -120,6 +115,26 @@ class ExtractLinks(webapp2.RequestHandler):
 				item.put()
 
 		self.response.write(template.render(template_values))
+
+def check_commercial_link(link, parsed_url):
+
+	if "mailto" == parsed_url.scheme:
+		return link
+
+	if "theguardian.com" in parsed_url.hostname:
+		return link
+
+	if "guardian.co.uk" in parsed_url.hostname:
+		link.invalid = True
+		link.error = "Internal commercial link references old domain"
+		return link
+
+	parsed_link = BeautifulSoup(link.raw_text)
+	if link.commercial:
+		if not "rel" in parsed_link.attrs.keys() or parsed_link.attrs["rel"] != "nofollow":
+			link.invalid = True
+			link.error = "Nofollow not applied to sponsored feature link"
+	return link
 
 class CheckLinks(webapp2.RequestHandler):
 	def get(self):
@@ -152,6 +167,12 @@ class CheckLinks(webapp2.RequestHandler):
 				link.invalid = True
 				link.error = "URL had an invalid format"
 				continue
+
+			if link.commercial:
+				check_commercial_link(link, parsed_url)
+
+				if link.invalid:
+					continue
 
 			if parsed_url.scheme in ["http", "https"]:
 

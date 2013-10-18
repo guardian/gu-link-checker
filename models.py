@@ -19,3 +19,5 @@ class Link(ndb.Model):
 	last_checked = ndb.DateTimeProperty(auto_now=True)
 	invalid = ndb.BooleanProperty(default=False)
 	error = ndb.StringProperty()
+	commercial = ndb.BooleanProperty(default=False)
+	raw_text = ndb.StringProperty()

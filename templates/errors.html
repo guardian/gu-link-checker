@@ -28,8 +28,13 @@
 						<p class="link-error-detail-message">{{link.error}}</p>
 						<p class="link-error-detail-view-link l-smaller"><a href="{{link.link_url}}">View the link</a></p>
 					</div>
+					{% if link.link_text %}
+					{% endif %}
 					<p class="link-error-origin l-smaller">Source: <a href="{{link.origin_url}}">{{link.origin_url}}</a></p>
 					<p class="link-error-when l-smaller">Checked: <time class="link-error-when-timestamp">{{link.last_checked_text}}</time></p>
+					{% if link.commercial %}
+					<p class="link-error-commercial-indicator l-smaller">Commercial content</p> 
+					{% endif %}
 				</section>
 				{% else %}
 				<p>No errors found, good work everyone!</p>

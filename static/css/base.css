@@ -43,3 +43,8 @@ p, p + p {
 .heading-block {
 	border-bottom: 2px solid #eee;
 }
+
+.link-error-commercial-indicator {
+	font-weight: bold;
+	color: red;
+}

@@ -28,7 +28,6 @@ class DisplayInvalidLinksPage(webapp2.RequestHandler):
 		template_values = {"heading_text" : "Link errors"}
 
 		last_24_hours = datetime.datetime.now() - datetime.timedelta(days = 1)
-		logging.info(last_24_hours)
 
 		error_query = Link.query(Link.invalid == True, Link.last_checked >= last_24_hours).order(-Link.last_checked)
 
@@ -39,6 +38,7 @@ class DisplayInvalidLinksPage(webapp2.RequestHandler):
 
 			if link.last_checked:
 				link.last_checked_text = link.last_checked.strftime('%Y-%m-%d %H:%M:%S')
+
 			return link
 
 

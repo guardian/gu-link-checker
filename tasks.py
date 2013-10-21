@@ -107,7 +107,7 @@ class ExtractLinks(webapp2.RequestHandler):
 
 					template_values['links_extracted'].append(href)
 					if href:
-						link_record = Link(parent=item.key, link_url=href, raw_text=str(link), commercial=item.commercial)
+						link_record = Link(parent=item.key, link_url=href, raw_text=str(link), commercial=item.commercial, link_text=unicode(link.string))
 
 						link_record.put()
 
@@ -140,7 +140,7 @@ class CheckLinks(webapp2.RequestHandler):
 	def get(self):
 		def check_url(url):
 			try:
-				link_check_result = urlfetch.fetch(url, deadline=7)
+				link_check_result = urlfetch.fetch(url, deadline=9)
 				return (200 <= link_check_result.status_code < 400, "Status code {0}".format(link_check_result.status_code))
 			except Exception, e:
 				logging.warn(e)
@@ -175,6 +175,11 @@ class CheckLinks(webapp2.RequestHandler):
 					continue
 
 			if parsed_url.scheme in ["http", "https"]:
+
+				url_to_check = link.link_url
+
+				if "#" in url_to_check:
+					url_to_check = url_to_check.split("#")[0]
 
 				(link_status, error_message) = check_url(link.link_url)
 

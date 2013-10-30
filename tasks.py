@@ -103,11 +103,25 @@ class ExtractLinks(webapp2.RequestHandler):
 					continue
 
 				for link in soup.find_all('a'):
+					link_raw_text = str(link)
+
+					if len(link_raw_text) > 500:
+						logging.warning("Large link text value {raw_string}".format(raw_string=link_raw_text))
+						continue
+
 					href = link.get("href")
+
+					if not href:
+						logging.warning("No ref for {link}".format(link=link))
+						continue
+
+					if len(href) >= 500:
+						logging.warning("Link too large to store {link_text}".format(link_text=href))
+						continue
 
 					template_values['links_extracted'].append(href)
 					if href:
-						link_record = Link(parent=item.key, link_url=href, raw_text=str(link), commercial=item.commercial, link_text=unicode(link.string))
+						link_record = Link(parent=item.key, link_url=href, raw_text=link_raw_text, commercial=item.commercial, link_text=unicode(link.string))
 
 						link_record.put()
 
@@ -121,13 +135,14 @@ def check_commercial_link(link, parsed_url):
 	if "mailto" == parsed_url.scheme:
 		return link
 
-	if "theguardian.com" in parsed_url.hostname:
-		return link
+	if parsed_url.hostname:
+		if "theguardian.com" in parsed_url.hostname:
+			return link
 
-	if "guardian.co.uk" in parsed_url.hostname:
-		link.invalid = True
-		link.error = "Internal commercial link references old domain"
-		return link
+		if "guardian.co.uk" in parsed_url.hostname:
+			link.invalid = True
+			link.error = "Internal commercial link references old domain"
+			return link
 
 	parsed_link = BeautifulSoup(link.raw_text)
 	if link.commercial:
@@ -166,12 +181,14 @@ class CheckLinks(webapp2.RequestHandler):
 			except ValueError, ve:
 				link.invalid = True
 				link.error = "URL had an invalid format"
+				link.put()
 				continue
 
 			if link.commercial:
 				check_commercial_link(link, parsed_url)
 
 				if link.invalid:
+					link.put()
 					continue
 
 			if parsed_url.scheme in ["http", "https"]:

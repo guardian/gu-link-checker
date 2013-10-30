@@ -22,7 +22,7 @@ class MainPage(webapp2.RequestHandler):
 		self.response.out.write(template.render(template_values))
 
 class DisplayInvalidLinksPage(webapp2.RequestHandler):
-	def get(self, category="all"):
+	def get(self, category="all", when="today"):
 		template = jinja_environment.get_template('errors.html')
 		
 		template_values = {"heading_text" : "Link errors"}
@@ -30,6 +30,13 @@ class DisplayInvalidLinksPage(webapp2.RequestHandler):
 		last_24_hours = datetime.datetime.now() - datetime.timedelta(days = 1)
 
 		error_query = Link.query(Link.invalid == True, Link.last_checked >= last_24_hours).order(-Link.last_checked)
+
+		if not when == "today":
+			date = datetime.strptime(when, "%Y-%m-%d")
+			logging.info(date)
+
+		if category == "commercial":
+			error_query = Link.query(Link.invalid == True, Link.commercial == True, Link.last_checked >= last_24_hours).order(-Link.last_checked)
 
 		def process_link(link):
 			content = link.key.parent().get()

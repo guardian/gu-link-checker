@@ -14,7 +14,9 @@
 			<aside class="error-count-message delta">({{error_links|length}} issues found)</aside>
 			{% endif %}
 			<h1 class="beta sans-serif">{{heading_text}}</h1>
+			{% if today %}
 			<p>All issues on this page seen in the last 24 hours</p>
+			{% endif %}
 		</div>
 	</div>
 

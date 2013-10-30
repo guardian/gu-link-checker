@@ -105,18 +105,10 @@ class ExtractLinks(webapp2.RequestHandler):
 				for link in soup.find_all('a'):
 					link_raw_text = str(link)
 
-					if len(link_raw_text) > 500:
-						logging.warning("Large link text value {raw_string}".format(raw_string=link_raw_text))
-						continue
-
 					href = link.get("href")
 
-					if not href:
-						logging.warning("No ref for {link}".format(link=link))
-						continue
-
-					if len(href) >= 500:
-						logging.warning("Link too large to store {link_text}".format(link_text=href))
+					if not href or len(href) >= 500 or len(link_raw_text) > 500:
+						IncomprehensibleLink(parent=item.key, content_url=item.web_url, raw_text=unicode(link.string)).put()
 						continue
 
 					template_values['links_extracted'].append(href)
@@ -136,8 +128,9 @@ def check_commercial_link(link, parsed_url):
 		return link
 
 	if parsed_url.hostname:
-		if "theguardian.com" in parsed_url.hostname:
-			return link
+		for internal_host in ["theguardian.com", "guim.co.uk"]:
+			if internal_host in parsed_url.hostname:
+				return link
 
 		if "guardian.co.uk" in parsed_url.hostname:
 			link.invalid = True
@@ -159,7 +152,7 @@ class CheckLinks(webapp2.RequestHandler):
 				return (200 <= link_check_result.status_code < 400, "Status code {0}".format(link_check_result.status_code), link_check_result.status_code)
 			except Exception, e:
 				logging.warn(e)
-				return (False, "Failed to read the url: {0}".format(e), link_check_result.status_code)
+				return (False, "Failed to read the url: {0}".format(e), None)
 
 			return (False, None, None)
 
@@ -209,7 +202,6 @@ class CheckLinks(webapp2.RequestHandler):
 				link.checked = True
 				link.invalid = not link_status
 
-				logging.info(link_status_code)
 				if link_status_code:
 					link.status_code = link_status_code
 

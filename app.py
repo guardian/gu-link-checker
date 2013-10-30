@@ -25,18 +25,26 @@ class DisplayInvalidLinksPage(webapp2.RequestHandler):
 	def get(self, category="all", when="today"):
 		template = jinja_environment.get_template('errors.html')
 		
-		template_values = {"heading_text" : "Link errors"}
+		template_values = {
+			"heading_text" : "Link errors",
+			"today" : True}
 
 		last_24_hours = datetime.datetime.now() - datetime.timedelta(days = 1)
 
 		error_query = Link.query(Link.invalid == True, Link.last_checked >= last_24_hours).order(-Link.last_checked)
 
+
 		if not when == "today":
-			date = datetime.strptime(when, "%Y-%m-%d")
-			logging.info(date)
+			start_date = datetime.datetime.strptime(when, "%Y-%m-%d")
+			next_day = datetime.timedelta(days=1)
+			end_date = start_date + next_day
+
+			error_query = Link.query(Link.invalid == True, Link.last_checked >= start_date, Link.last_checked <= end_date).order(-Link.last_checked)
+
+			template_values["today"] = False
 
 		if category == "commercial":
-			error_query = Link.query(Link.invalid == True, Link.commercial == True, Link.last_checked >= last_24_hours).order(-Link.last_checked)
+			error_query = error_query.filter(Link.commercial == True)
 
 		def process_link(link):
 			content = link.key.parent().get()
@@ -57,5 +65,6 @@ app = webapp2.WSGIApplication([
 	('/', MainPage),
 	('/invalid-links', DisplayInvalidLinksPage),
 	('/invalid-links/(\w+)', DisplayInvalidLinksPage),
+	('/invalid-links/(\w+)/(\d{4}-\d{2}-\d{2})', DisplayInvalidLinksPage),
 	],
 	debug=True)

@@ -28,9 +28,17 @@
 
 					<div class="link-error-detail">
 						<p class="link-error-detail-message">{{link.error}}</p>
-						<p class="link-error-detail-view-link l-smaller"><a href="{{link.link_url}}">View the link</a></p>
+						{% if link.fix %}
+						<p>{{link.fix}}</p>
+						{% endif %}
 					</div>
+					<p class="button-bar">
+						<a class="link-error-detail-view-link button-style-link" href="{{link.link_url}}" target="_blank">View</a>
+						<a class="link-error-detail-view-link button-style-link" href="{{link.edit_url}}" target="_blank">Edit</a>
+					</p>
+
 					{% if link.link_text %}
+					<p class="link-error-link-text l-smaller">Anchor text: {{link.link_text}}</p>
 					{% endif %}
 					<p class="link-error-origin l-smaller">Source: <a href="{{link.origin_url}}">{{link.origin_url}}</a></p>
 					<p class="link-error-when l-smaller">Checked: <time class="link-error-when-timestamp">{{link.last_checked_text}}</time></p>

@@ -27,10 +27,6 @@ p, p + p {
 	font-style: italic;
 }
 
-.link-error-detail {
-	padding-bottom: 0.1rem;
-}
-
 .l-smaller {
 	font-size: 0.8em;
 }
@@ -47,4 +43,23 @@ p, p + p {
 .link-error-commercial-indicator {
 	font-weight: bold;
 	color: red;
+}
+
+.button-bar {
+	padding-bottom: 0.5rem;
+}
+
+.button-style-link {
+	display: inline-block;
+	border: 1px solid #eee;
+	padding: 0 0.5rem;
+	font-size: 0.75rem;
+	box-shadow: 2px 2px 2px #ccc;
+	border-radius: 1px;
+	transition: 0.5s;
+	margin-right: 0.5rem;
+}
+
+.button-style-link:hover {
+	box-shadow: 4px 4px 4px #ddd;
 }

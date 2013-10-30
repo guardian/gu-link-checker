@@ -50,6 +50,7 @@ class DisplayInvalidLinksPage(webapp2.RequestHandler):
 			content = link.key.parent().get()
 			if content:
 				link.origin_url = content.web_url
+				link.edit_url = content.web_url.replace("www.theguardian.com", "www.guprod.gnl")
 
 			if link.last_checked:
 				link.last_checked_text = link.last_checked.strftime('%Y-%m-%d %H:%M:%S')

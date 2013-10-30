@@ -15,7 +15,7 @@ from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
 
 
-from models import Content, Link
+from models import Content, Link, IncomprehensibleLink
 
 from bs4 import BeautifulSoup
 from validate_email import validate_email
@@ -141,6 +141,8 @@ def check_commercial_link(link, parsed_url):
 	if link.commercial:
 		if not "rel" in parsed_link.attrs.keys() or parsed_link.attrs["rel"] != "nofollow":
 			link.invalid = True
+			parsed_link["rel"] = "nofollow"
+			link.fix = "Link should be: {corrected_link}".format(corrected_link=unicode(parsed_link))
 			link.error = "Nofollow not applied to sponsored feature link"
 	return link
 

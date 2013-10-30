@@ -23,6 +23,7 @@ class Link(ndb.Model):
 	raw_text = ndb.StringProperty()
 	link_text = ndb.StringProperty()
 	status_code = ndb.IntegerProperty()
+	fix = ndb.StringProperty()
 
 class IncomprehensibleLink(ndb.Model):
 	content_url = ndb.StringProperty(required=True)

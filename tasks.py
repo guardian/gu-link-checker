@@ -156,12 +156,12 @@ class CheckLinks(webapp2.RequestHandler):
 		def check_url(url):
 			try:
 				link_check_result = urlfetch.fetch(url, deadline=9)
-				return (200 <= link_check_result.status_code < 400, "Status code {0}".format(link_check_result.status_code))
+				return (200 <= link_check_result.status_code < 400, "Status code {0}".format(link_check_result.status_code), link_check_result.status_code)
 			except Exception, e:
 				logging.warn(e)
-				return (False, "Failed to read the url: {0}".format(e))
+				return (False, "Failed to read the url: {0}".format(e), link_check_result.status_code)
 
-			return (False, None)
+			return (False, None, None)
 
 		template = jinja_environment.get_template('tasks/link-checking.html')
 		template_values = {}
@@ -198,7 +198,7 @@ class CheckLinks(webapp2.RequestHandler):
 				if "#" in url_to_check:
 					url_to_check = url_to_check.split("#")[0]
 
-				(link_status, error_message) = check_url(link.link_url)
+				(link_status, error_message, link_status_code) = check_url(link.link_url)
 
 				if link_status:
 					valid_links += 1
@@ -208,6 +208,11 @@ class CheckLinks(webapp2.RequestHandler):
 
 				link.checked = True
 				link.invalid = not link_status
+
+				logging.info(link_status_code)
+				if link_status_code:
+					link.status_code = link_status_code
+
 				if not link_status: 
 					link.error = "Link did not resolve correctly: " + error_message
 

@@ -22,3 +22,4 @@ class Link(ndb.Model):
 	commercial = ndb.BooleanProperty(default=False)
 	raw_text = ndb.StringProperty()
 	link_text = ndb.StringProperty()
+	status_code = ndb.IntegerProperty()

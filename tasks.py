@@ -55,6 +55,8 @@ class CheckRecentContent(webapp2.RequestHandler):
     		for item in payload["response"].get("results", []):
     			if not 'fields' in item or not 'body' in item['fields']:
     				continue
+
+    			#logging.info(item['fields']['body'])
 				
     			lookup_key = ndb.Key('Content', item["id"])
     			content_entry = lookup_key.get()
@@ -87,7 +89,7 @@ class ExtractLinks(webapp2.RequestHandler):
 
 		def parse_body(item):
 			try:
-				soup = BeautifulSoup(item.body)
+				soup = BeautifulSoup(item.body, "html5lib")
 				return soup
 			except:
 				logging.fatal("Could not parse {0}".format(item.web_url))
@@ -106,6 +108,7 @@ class ExtractLinks(webapp2.RequestHandler):
 					link_raw_text = str(link)
 
 					href = link.get("href")
+					#logging.info(href)
 
 					if not href or len(href) >= 500 or len(link_raw_text) > 500:
 						IncomprehensibleLink(parent=item.key, content_url=item.web_url, raw_text=unicode(link.string)).put()
@@ -132,16 +135,12 @@ def check_commercial_link(link, parsed_url):
 			if internal_host in parsed_url.hostname:
 				return link
 
-		if "guardian.co.uk" in parsed_url.hostname:
-			link.invalid = True
-			link.error = "Internal commercial link references old domain"
-			return link
-
-	parsed_link = BeautifulSoup(link.raw_text)
+	parsed_link = BeautifulSoup(link.raw_text, "html5lib").find('a')
 	if link.commercial:
 		if not "rel" in parsed_link.attrs.keys() or parsed_link.attrs["rel"] != "nofollow":
 			link.invalid = True
 			parsed_link["rel"] = "nofollow"
+			logging.info(unicode(parsed_link))
 			link.fix = "Link should be: {corrected_link}".format(corrected_link=unicode(parsed_link))
 			link.error = "Nofollow not applied to sponsored feature link"
 	return link
@@ -176,6 +175,13 @@ class CheckLinks(webapp2.RequestHandler):
 			except ValueError, ve:
 				link.invalid = True
 				link.error = "URL had an invalid format"
+				link.put()
+				continue
+
+			if parsed_url.hostname and "guardian.co.uk" in parsed_url.hostname:
+				link.invalid = True
+				link.error = "Internal link references the old domain"
+				link.fix = "Is there an an alternative location on the new domain?"
 				link.put()
 				continue
 

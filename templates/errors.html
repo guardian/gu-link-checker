@@ -29,7 +29,7 @@
 					<div class="link-error-detail">
 						<p class="link-error-detail-message">{{link.error}}</p>
 						{% if link.fix %}
-						<p>{{link.fix}}</p>
+						<p>{{link.fix|e}}</p>
 						{% endif %}
 					</div>
 					<p class="button-bar">

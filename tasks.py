@@ -20,6 +20,8 @@ from models import Content, Link, IncomprehensibleLink
 from bs4 import BeautifulSoup
 from validate_email import validate_email
 
+import reports
+
 jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), "templates")))
 
@@ -137,12 +139,13 @@ def check_commercial_link(link, parsed_url):
 
 	parsed_link = BeautifulSoup(link.raw_text, "html5lib").find('a')
 	if link.commercial:
-		if not "rel" in parsed_link.attrs.keys() or parsed_link.attrs["rel"] != "nofollow":
+		if not "rel" in parsed_link.attrs.keys() or not "nofollow" in parsed_link.attrs["rel"]:
 			link.invalid = True
 			parsed_link["rel"] = "nofollow"
-			logging.info(unicode(parsed_link))
+			#logging.info(unicode(parsed_link))
 			link.fix = "Link should be: {corrected_link}".format(corrected_link=unicode(parsed_link))
 			link.error = "Nofollow not applied to sponsored feature link"
+			link.no_follow_fail = True
 	return link
 
 class CheckLinks(webapp2.RequestHandler):
@@ -238,4 +241,5 @@ app = webapp2.WSGIApplication([
     ('/tasks/check-recent', CheckRecentContent),
     ('/tasks/extract-links', ExtractLinks),
     ('/tasks/check-links', CheckLinks),
+    ('/tasks/reports/email/no-follow', reports.NoFollow),
 ], debug=True)

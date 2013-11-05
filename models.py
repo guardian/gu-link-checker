@@ -24,6 +24,7 @@ class Link(ndb.Model):
 	link_text = ndb.StringProperty()
 	status_code = ndb.IntegerProperty()
 	fix = ndb.StringProperty()
+	no_follow_fail = ndb.BooleanProperty(default=False)
 
 class IncomprehensibleLink(ndb.Model):
 	content_url = ndb.StringProperty(required=True)

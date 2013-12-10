@@ -11,3 +11,7 @@ cron:
 - description: Extract links from content bodies
   url: /tasks/check-links
   schedule: every 2 minutes
+
+- description: Daily nofollow link report
+  url: /tasks/reports/email/no-follow
+  schedule: every day 19:00

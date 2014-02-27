@@ -103,6 +103,7 @@ class ExtractLinks(webapp2.RequestHandler):
 				if not soup:
 					template_values["unparseable_content"].append(item)
 					item.parse_failed = True
+					item.links_extracted = True
 					item.put()
 					continue
 
@@ -137,7 +138,7 @@ def check_commercial_link(link, parsed_url):
 			if internal_host in parsed_url.hostname:
 				return link
 
-	parsed_link = BeautifulSoup(link.raw_text, "html5lib").find('a')
+	parsed_link = BeautifulSoup(link.raw_text.encode('utf-8'), "html5lib").find('a')
 	if link.commercial:
 		if not "rel" in parsed_link.attrs.keys() or not "nofollow" in parsed_link.attrs["rel"]:
 			link.invalid = True

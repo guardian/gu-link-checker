@@ -138,6 +138,10 @@ def check_commercial_link(link, parsed_url):
 			if internal_host in parsed_url.hostname:
 				return link
 
+	if parsed_url.fragment and not parsed_url.path:
+		logging.info("Giving a pass to url with no path and fragment %s" % parsed_url.fragment)
+		return link
+
 	parsed_link = BeautifulSoup(link.raw_text.encode('utf-8'), "html5lib").find('a')
 	if link.commercial:
 		if not "rel" in parsed_link.attrs.keys() or not "nofollow" in parsed_link.attrs["rel"]:

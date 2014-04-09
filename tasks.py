@@ -147,8 +147,8 @@ def check_commercial_link(link, parsed_url):
 		if not "rel" in parsed_link.attrs.keys() or not "nofollow" in parsed_link.attrs["rel"]:
 			link.invalid = True
 			parsed_link["rel"] = "nofollow"
-			#logging.info(unicode(parsed_link))
-			link.fix = "Link should be: {corrected_link}".format(corrected_link=unicode(parsed_link))
+			logging.debug(parsed_link)
+			link.fix = "Link should be: {corrected_link}".format(corrected_link=parsed_link)
 			link.error = "Nofollow not applied to sponsored feature link"
 			link.no_follow_fail = True
 	return link

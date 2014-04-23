@@ -22,3 +22,9 @@ indexes:
   - name: invalid
   - name: last_checked
     direction: desc
+
+- kind: Link
+  properties:
+  - name: status_code
+  - name: last_checked
+    direction: desc

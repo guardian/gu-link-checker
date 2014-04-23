@@ -247,4 +247,5 @@ app = webapp2.WSGIApplication([
     ('/tasks/extract-links', ExtractLinks),
     ('/tasks/check-links', CheckLinks),
     ('/tasks/reports/email/no-follow', reports.NoFollow),
+    ('/tasks/reports/email/bad-links', reports.BadLinks),
 ], debug=True)

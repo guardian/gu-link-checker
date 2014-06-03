@@ -148,7 +148,7 @@ def check_commercial_link(link, parsed_url):
 			link.invalid = True
 			parsed_link["rel"] = "nofollow"
 			logging.debug(parsed_link)
-			link.fix = "Link should be: {corrected_link}".format(corrected_link=parsed_link)
+			link.fix_text = "Link should be: {corrected_link}".format(corrected_link=parsed_link)
 			link.error = "Nofollow not applied to sponsored feature link"
 			link.no_follow_fail = True
 	return link
@@ -183,13 +183,23 @@ class CheckLinks(webapp2.RequestHandler):
 			except ValueError, ve:
 				link.invalid = True
 				link.error = "URL had an invalid format"
+				link.actionable = True
 				link.put()
 				continue
 
 			if parsed_url.hostname and "guardian.co.uk" in parsed_url.hostname:
 				link.invalid = True
 				link.error = "Internal link references the old domain"
-				link.fix = "Is there an an alternative location on the new domain?"
+				link.fix_text = "Is there an an alternative location on the new domain?"
+				link.actionable = True
+				link.put()
+				continue
+
+			if parsed_url.hostname and ".gnl" in parsed_url.hostname:
+				link.invalid = True
+				link.error = "Internal domain used in a link"
+				link.fix_text = "Switch preview links to live ones"
+				link.actionable = True
 				link.put()
 				continue
 
@@ -221,8 +231,11 @@ class CheckLinks(webapp2.RequestHandler):
 				if link_status_code:
 					link.status_code = link_status_code
 
+					if link_status_code == 404:
+						link.actionable = True
+
 				if not link_status: 
-					link.error = "Link did not resolve correctly: " + error_message
+					link.error = "Link did not resolve correctly: " + error_message[:400] + "..."
 
 			if parsed_url.scheme == 'mailto':
 				email_valid = validate_email(link.link_url[7:])
@@ -230,6 +243,7 @@ class CheckLinks(webapp2.RequestHandler):
 				if not email_valid:
 					link.invalid = True
 					link.error = "Email address did not have a valid structure"
+					link.actionable = True
 
 
 			link.checked = True

@@ -12,6 +12,12 @@ indexes:
 
 - kind: Link
   properties:
+  - name: actionable
+  - name: last_checked
+    direction: desc
+
+- kind: Link
+  properties:
   - name: commercial
   - name: invalid
   - name: last_checked

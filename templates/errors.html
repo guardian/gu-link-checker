@@ -31,6 +31,9 @@
 						{% if link.fix %}
 						<p>{{link.fix|e}}</p>
 						{% endif %}
+						{% if link.fix_text %}
+						<p>{{link.fix_text|e}}</p>
+						{% endif %}
 					</div>
 					<p class="button-bar">
 						<a class="link-error-detail-view-link button-style-link" href="{{link.link_url}}" target="_blank">View</a>

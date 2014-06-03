@@ -56,10 +56,10 @@ class BadLinks(webapp2.RequestHandler):
 		now = datetime.datetime.now()
 		last_hour = now - datetime.timedelta(hours = 1)
 
-		error_query = Link.query(Link.status_code == 404, Link.last_checked >= last_hour).order(-Link.last_checked)
+		error_query = Link.query(Link.actionable == True, Link.last_checked >= last_hour).order(-Link.last_checked)
 
 		errors = [error for error in error_query]
-		logging.info(errors)
+		#logging.info(errors)
 
 		content = "No bad link errors found"
 

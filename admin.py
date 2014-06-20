@@ -26,7 +26,7 @@ class ConfigurationPage(webapp2.RequestHandler):
 	def post(self):
 		key = self.request.POST['key']
 		value = self.request.POST['value']
-		map(lambda x: logging.info(x), [key, value])
+		#map(lambda x: logging.info(x), [key, value])
 
 		configuration.create(key, value)
 

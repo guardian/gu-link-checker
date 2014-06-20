@@ -28,11 +28,14 @@ jinja_environment = jinja2.Environment(
 def is_commercial(item):
 	return "tone/sponsoredfeatures" in map(lambda p: p["id"], item["tags"])
 
+def last_24_hours():
+	return (datetime.date.today() + datetime.timedelta(-1)).isoformat()
+
 class CheckRecentContent(webapp2.RequestHandler):
     def get(self):
     	query = {
     		"page-size" : "50",
-    		"date-id" : "date/today",
+    		"from-date" : last_24_hours(),
     		"show-fields" : "body",
     		"show-tags" : "all",
     		"use-date" : "last-modified",
@@ -46,7 +49,7 @@ class CheckRecentContent(webapp2.RequestHandler):
 
     	query['api-key'] = api_key
 
-    	response = urlfetch.fetch('http://content.guardianapis.com/search?%s' % urlencode(query), deadline=7)
+    	response = urlfetch.fetch('http://beta.content.guardianapis.com/search?%s' % urlencode(query), deadline=7)
 
     	if response.status_code == 200:
     		payload = json.loads(response.content)

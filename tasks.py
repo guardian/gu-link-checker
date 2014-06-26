@@ -26,6 +26,9 @@ jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), "templates")))
 
 def is_commercial(item):
+	if 'guardian-masterclasses' in item['id']:
+		logging.info('Giving Masterclasses content a pass in the commercial check')
+		return False
 	return "tone/sponsoredfeatures" in map(lambda p: p["id"], item["tags"])
 
 def last_24_hours():
@@ -36,7 +39,7 @@ class CheckRecentContent(webapp2.RequestHandler):
     	query = {
     		"page-size" : "50",
     		"from-date" : last_24_hours(),
-    		"show-fields" : "body",
+    		"show-fields" : "body,lastModified",
     		"show-tags" : "all",
     		"use-date" : "last-modified",
     	}
@@ -72,6 +75,8 @@ class CheckRecentContent(webapp2.RequestHandler):
     				content_entry.checked = False
     				content_entry.parse_failed = False
     				content_entry.links_extracted = False
+    				content_entry.published_date = item['webPublicationDate']
+    				content_entry.modified_timestamp = item.get('fields', {}).get('lastModified', None)
 
     				for current_link in Link.query(ancestor=content_entry.key):
     					current_link.key.delete()

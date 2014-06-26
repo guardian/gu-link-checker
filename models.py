@@ -12,6 +12,8 @@ class Content(ndb.Model):
 	checked = ndb.BooleanProperty(default=False)
 	links_extracted = ndb.BooleanProperty(default=False)
 	parse_failed = ndb.BooleanProperty(default=False)
+	published_timestamp = ndb.StringProperty()
+	modified_timestamp = ndb.StringProperty()
 
 class Link(ndb.Model):
 	link_url = ndb.StringProperty(required=True)

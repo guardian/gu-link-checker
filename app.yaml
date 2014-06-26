@@ -1,5 +1,5 @@
 application: gu-link-checker
-version: 28
+version: 30
 runtime: python27
 api_version: 1
 threadsafe: true

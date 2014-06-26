@@ -55,6 +55,9 @@ class DisplayInvalidLinksPage(webapp2.RequestHandler):
 			if link.last_checked:
 				link.last_checked_text = link.last_checked.strftime('%Y-%m-%d %H:%M:%S')
 
+			link.modified_timestamp = content.modified_timestamp
+			link.published_timestamp = content.published_timestamp
+
 			return link
 
 

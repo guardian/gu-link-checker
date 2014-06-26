@@ -1,5 +1,6 @@
 import datetime
 import logging
+import re
 
 import webapp2
 
@@ -10,7 +11,13 @@ import configuration
 import headers
 
 def link_detail(link_data):
-	return "    Anchor text: {anchor_text}\n  Link: {link}\n\n".format(anchor_text=link_data.link_text.encode('utf-8'),link=link_data.link_url.encode('utf-8'))
+	return "  Anchor text: {anchor_text}\n  Link: {link}\n\n".format(anchor_text=link_data.link_text.encode('utf-8'),link=link_data.link_url.encode('utf-8'))
+
+def display_date(ds):
+	logging.info(ds)
+	if not ds:
+		return None
+	return datetime.datetime(*map(int, re.split('[^\d]', ds)[:-1])).strftime('%d/%m/%Y')
 
 class NoFollow(webapp2.RequestHandler):
 	def get(self):
@@ -19,7 +26,7 @@ class NoFollow(webapp2.RequestHandler):
 
 		error_query = Link.query(Link.invalid == True, Link.commercial == True, Link.last_checked >= last_24_hours).order(-Link.last_checked)
 
-		no_follow_errors = [error for error in error_query if "nofollow" in error.error.lower()]
+		no_follow_errors = [error for error in error_query if error.no_follow_fail]
 
 		content = "No nofollow errors found"
 
@@ -31,9 +38,15 @@ class NoFollow(webapp2.RequestHandler):
 
 			for source_url in source_urls:
 				lines.append("Source: {source}\n".format(source=source_url))
-				errors = [link_detail(e) for e in no_follow_errors if source_url == e.key.parent().get().web_url]
-				lines.append("  Contains {error_total} errors\n\n".format(error_total=len(errors)))
-				lines.extend(errors)
+				errors = [e for e in no_follow_errors if source_url == e.key.parent().get().web_url]
+				content = errors[0].key.parent().get()
+
+				if content and content.published_timestamp and content.modified_timestamp:
+					lines.append("  Publication date: {pub_date}; last updated: {last_updated}\n".format(pub_date=display_date(content.published_timestamp), last_updated=display_date(content.modified_timestamp)))
+
+				error_details = map(link_detail, errors)
+				lines.append("  Contains {error_total} errors\n\n".format(error_total=len(error_details)))
+				lines.extend(error_details)
 
 			lines.append("\n")
 

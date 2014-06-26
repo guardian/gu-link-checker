@@ -22,6 +22,8 @@ from validate_email import validate_email
 
 import reports
 
+CONTENT_API_HOST = configuration.lookup('CONTENT_API_HOST', 'beta.content.guardianapis.com')
+
 jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), "templates")))
 
@@ -52,7 +54,7 @@ class CheckRecentContent(webapp2.RequestHandler):
 
     	query['api-key'] = api_key
 
-    	response = urlfetch.fetch('http://beta.content.guardianapis.com/search?%s' % urlencode(query), deadline=7)
+    	response = urlfetch.fetch('http://%s/search?%s' % (CONTENT_API_HOST, urlencode(query)), deadline=7)
 
     	if response.status_code == 200:
     		payload = json.loads(response.content)
@@ -75,7 +77,7 @@ class CheckRecentContent(webapp2.RequestHandler):
     				content_entry.checked = False
     				content_entry.parse_failed = False
     				content_entry.links_extracted = False
-    				content_entry.published_date = item['webPublicationDate']
+    				content_entry.published_timestamp = item['webPublicationDate']
     				content_entry.modified_timestamp = item.get('fields', {}).get('lastModified', None)
 
     				for current_link in Link.query(ancestor=content_entry.key):
@@ -83,7 +85,12 @@ class CheckRecentContent(webapp2.RequestHandler):
 
     				content_entry.put()
     			else:
-    				Content(id=item['id'], web_url=item['webUrl'], body= item['fields']['body'], commercial=is_commercial(item)).put()
+    				Content(id=item['id'],
+    					web_url=item['webUrl'],
+    					body= item['fields']['body'],
+    					commercial=is_commercial(item),
+    					published_timestamp=item['webPublicationDate'],
+    					modified_timestamp=item.get('fields', {}).get('lastModified', None)).put()
         self.response.write('Content checked')
 
 class ExtractLinks(webapp2.RequestHandler):

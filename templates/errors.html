@@ -45,6 +45,11 @@
 					{% endif %}
 					<p class="link-error-origin l-smaller">Source: <a href="{{link.origin_url}}">{{link.origin_url}}</a></p>
 					<p class="link-error-when l-smaller">Checked: <time class="link-error-when-timestamp">{{link.last_checked_text}}</time></p>
+
+					{% if link.modified_timestamp and link.published_timestamp %}
+					<p class="link-timestamps l-smaller">Timestamps: publication: {{link.published_timestamp}}; modified: {{link.modified_timestamp}}</p>
+					{% endif %}
+
 					{% if link.commercial %}
 					<p class="link-error-commercial-indicator l-smaller">Commercial content</p> 
 					{% endif %}
